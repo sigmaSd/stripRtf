@@ -474,6 +474,13 @@ export function rtfToText(
   defaultEncoding: string = "cp1252",
   errors: "strict" | "ignore" = "ignore", // Defaulting to ignore for robustness
 ): string {
+  // Match the python implementtion, don't process text after the formal RTF structure
+  // Pre-processing: Truncate content after the formal RTF structure
+  const lastClosingBraceIdx = rtfText.lastIndexOf("}");
+  if (lastClosingBraceIdx > 0) {
+    rtfText = rtfText.substring(0, lastClosingBraceIdx);
+  }
+
   // Pre-processing: Simplify hyperlink fields into "DisplayText (URL)" format.
   rtfText = rtfText.replace(HYPERLINKS, (_match, _full, url, display) => {
     // Clean up URL (remove quotes) and display text (trim)
@@ -762,14 +769,15 @@ export function rtfToText(
   decodeHexBytes();
   // --- End final check ---
 
+  // Match the python implementtion, don't do cleanup for now
   // Basic cleanup - replace multiple pipes with single pipe, trim whitespace around pipes/newlines
-  output = output.replace(/\|+/g, "|");
-  output = output.replace(/[ \t]+\|/g, "|");
-  output = output.replace(/\|[ \t]+/g, "|");
-  output = output.replace(/(\n\|)+/g, "\n|"); // Remove empty cells at start of line
-  output = output.replace(/\|\s*(\n|$)/g, "\n"); // Remove trailing pipe before newline or EOF
-  output = output.replace(/\n{3,}/g, "\n\n"); // Collapse excess newlines
-  output = output.trim(); // Remove leading/trailing whitespace
+  // output = output.replace(/\|+/g, "|");
+  // output = output.replace(/[ \t]+\|/g, "|");
+  // output = output.replace(/\|[ \t]+/g, "|");
+  // output = output.replace(/(\n\|)+/g, "\n|"); // Remove empty cells at start of line
+  // output = output.replace(/\|\s*(\n|$)/g, "\n"); // Remove trailing pipe before newline or EOF
+  // output = output.replace(/\n{3,}/g, "\n\n"); // Collapse excess newlines
+  // output = output.trim(); // Remove leading/trailing whitespace
 
   return output; // Return the accumulated plain text
 }
