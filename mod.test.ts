@@ -22,7 +22,7 @@ Deno.test("intergation test", () => {
       continue;
     }
     try {
-      assertEquals(strippedContent.trim(), expectedContent.trim());
+      assertEquals(strippedContent, expectedContent);
       console.log(`%cTest passed`, "color: green");
       stats.passed++;
     } catch (e) {
