@@ -34,4 +34,7 @@ Deno.test("intergation test", () => {
     }
   }
   console.log(`Tests passed: ${stats.passed}, failed: ${stats.failed}`);
+  if (stats.failed > 0) {
+    throw new Error("Tests failed");
+  }
 });
