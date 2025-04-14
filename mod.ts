@@ -408,12 +408,62 @@ interface FontTableEntry {
   encoding: string; // Store the iconv-lite encoding name
 }
 
+function removePictGroups(rtfText: string): string {
+  // Fast check to see if \pict and \bin exist together in the text
+  if (!rtfText.includes("\\pict") || !rtfText.includes("\\bin")) {
+    return rtfText;
+  }
+
+  const result: string[] = [];
+  let i = 0;
+  const n = rtfText.length;
+  let inPict = false;
+  let binaryLength = 0;
+
+  while (i < n) {
+    if (!inPict && rtfText.startsWith("\\pict", i)) {
+      inPict = true;
+      i += "\\pict".length;
+      continue;
+    }
+
+    if (inPict) {
+      if (rtfText.startsWith("\\bin", i)) {
+        i += "\\bin".length;
+        let lengthStr = "";
+        while (i < n && /\d/.test(rtfText[i])) {
+          lengthStr += rtfText[i];
+          i++;
+        }
+        binaryLength = parseInt(lengthStr, 10);
+        i += binaryLength;
+        continue;
+      } else if (rtfText[i] === "}") {
+        inPict = false;
+        i++;
+        continue;
+      }
+    }
+
+    if (!inPict) {
+      result.push(rtfText[i]);
+    }
+
+    i++;
+  }
+
+  return result.join("");
+}
+
 // --- Main Conversion Function ---
 export function rtfToText(
   rtfText: string,
   defaultEncoding: string = "cp1252",
   errors: "strict" | "ignore" = "ignore",
 ): string {
+  // Pre-process to remove \pict groups
+  rtfText = removePictGroups(rtfText);
+
   // Pre-processing: Truncate content after the formal RTF structure
   const lastClosingBraceIdx = rtfText.lastIndexOf("}");
   if (lastClosingBraceIdx >= 0) { // Check >= 0
