@@ -1,5 +1,5 @@
 {
-  "name": "@sigma/stripRtf",
+  "name": "@sigma/striprtf",
   "version": "1.0.0",
   "exports": "./mod.ts",
   "license": "BSD-3-Clause",

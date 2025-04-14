@@ -1,4 +1,4 @@
-# stripRtf (javacript)
+# striprtf (javacript)
 
 ## Purpose
 
@@ -16,7 +16,7 @@ This module works across runtimes.
 **Example 1**
 
 ```ts
-import stripRtf from "@sigma/stripRtf";
+import stripRtf from "@sigma/striprtf";
 
 // Basic usage
 const rtf = "some rtf encoded string";
@@ -39,7 +39,7 @@ console.log(textSafe);
 You can also use this module directly from the command line:
 
 ```bash
-deno -R jsr:@sigma/stripRtf input.rtf [encoding] [error_mode]
+deno -R jsr:@sigma/striprtf input.rtf [encoding] [error_mode]
 ```
 
 Where:

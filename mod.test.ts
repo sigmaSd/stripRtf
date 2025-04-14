@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert@^1.0.12/equals";
-import stripRtf from "./mod.ts";
+import stripRtf from "@sigma/striprtf";
 
 Deno.test("intergation test", () => {
   const stats = { failed: 0, passed: 0 };

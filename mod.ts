@@ -1,5 +1,5 @@
 /**
- * # stripRtf (javacript)
+ * # striprtf (javacript)
  *
  * ## Purpose
  * This is a javascript module to convert Rich Text Format (RTF) files to plain text. Many documents, especially in medical and legacy systems, are written in RTF format which is not ideal for parsing and further processing. This library converts them to plain text while preserving structure.
@@ -10,7 +10,7 @@
  *
  * @example
  * ```ts
- * import stripRtf from "@sigma/stripRtf";
+ * import stripRtf from "@sigma/striprtf";
  *
  * // Basic usage
  * const rtf = "some rtf encoded string";
@@ -33,7 +33,7 @@
  * You can also use this module directly from the command line:
  *
  * ```bash
- * deno -R jsr:@sigma/stripRtf input.rtf [encoding] [error_mode]
+ * deno -R jsr:@sigma/striprtf input.rtf [encoding] [error_mode]
  * ```
  *
  * Where:
@@ -781,7 +781,7 @@ if (import.meta.main) {
   const args = process.argv.slice(2);
   if (args.length === 0) {
     console.error(
-      "Usage: stripRtf <path_to_rtf_file> [default_encoding] [error_mode]",
+      "Usage: striprtf <path_to_rtf_file> [default_encoding] [error_mode]",
     );
     console.error("  default_encoding: e.g., cp1252 (default)");
     console.error("  error_mode: strict or ignore (default)");
