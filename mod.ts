@@ -483,10 +483,11 @@ export function rtfToText(
 
   // Pre-processing: Simplify hyperlink fields into "DisplayText (URL)" format.
   rtfText = rtfText.replace(HYPERLINKS, (_match, _full, url, display) => {
-    // Clean up URL (remove quotes) and display text (trim)
-    const cleanedUrl = url.replace(/^"|"$/g, "");
+    // Match python implemenation, don't clean quotes
+    // // Clean up URL (remove quotes) and display text (trim)
+    // const cleanedUrl = url.replace(/^"|"$/g, "");
     const cleanedDisplay = display.trim();
-    return `${cleanedDisplay} (${cleanedUrl})`;
+    return `${cleanedDisplay}(${url})`; // Python uses \1(\2) which preserves quotes
   });
 
   // --- Parser State Initialization ---

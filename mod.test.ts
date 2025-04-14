@@ -23,10 +23,10 @@ Deno.test("intergation test", () => {
     }
     try {
       assertEquals(strippedContent.trim(), expectedContent.trim());
-      console.log("Test passed");
+      console.log(`%cTest passed`, "color: green");
       stats.passed++;
     } catch (e) {
-      console.log("Test failed");
+      console.log(`%cTest failed`, "color: red");
       stats.failed++;
       if (maybeTestName) {
         console.log(e);
