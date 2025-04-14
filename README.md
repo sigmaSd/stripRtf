@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This is a Deno module to convert Rich Text Format (RTF) files to plain text.
-Many documents, especially in medical and legacy systems, are written in RTF
-format which is not ideal for parsing and further processing. This library
+This is a javascript module to convert Rich Text Format (RTF) files to plain
+text. Many documents, especially in medical and legacy systems, are written in
+RTF format which is not ideal for parsing and further processing. This library
 converts them to plain text while preserving structure.
 
 This module works across runtimes.
