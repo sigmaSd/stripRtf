@@ -11,7 +11,7 @@
  * Aims to match the behavior of the reference Python implementation closely.
  */
 
-import iconv from "npm:iconv-lite@0.6.3";
+import iconv from "iconv-lite";
 
 // --- RTF Control Word Definitions ---
 const destinations: Set<string> = new Set([
@@ -456,7 +456,7 @@ function removePictGroups(rtfText: string): string {
 }
 
 // --- Main Conversion Function ---
-export function rtfToText(
+export function stripRtf(
   rtfText: string,
   defaultEncoding: string = "cp1252",
   errors: "strict" | "ignore" = "ignore",
@@ -509,7 +509,7 @@ export function rtfToText(
 
   // Parse the font table using the Python-equivalent regex
   // This regex *only* matches fonts that explicitly have \fcharset
-  rtfText.replace(FONTTABLE, (match, fontId, fcharset, fontName) => {
+  rtfText.replace(FONTTABLE, (_match, fontId, fcharset, fontName) => {
     // fontId = Group 1, fcharset = Group 2, fontName = Group 3
     // All groups are guaranteed to be non-null/undefined if a match occurs with this regex.
     const actualCharset = fcharset;
@@ -573,6 +573,7 @@ export function rtfToText(
     try {
       const buffer = Uint8Array.from(hexBytes);
       if (iconv.encodingExists(encodingToUse)) {
+        // @ts-ignore(TODO): https://github.com/denoland/deno/issues/28884
         const decodedString = iconv.decode(buffer, encodingToUse, {
           stripBOM: true,
         });
@@ -710,35 +711,45 @@ export function rtfToText(
   return output;
 }
 
+// keep the python original name
+export const rtfToText = stripRtf;
+
+export default stripRtf;
+
 // --- Deno Execution Block ---
 if (import.meta.main) {
-  if (Deno.args.length === 0) {
+  const process = await import("node:process");
+  const fs = await import("node:fs");
+
+  const args = process.argv.slice(2);
+  if (args.length === 0) {
     console.error(
-      "Usage: deno run --allow-read mod.ts <path_to_rtf_file> [default_encoding] [error_mode]",
+      "Usage: stripRtf <path_to_rtf_file> [default_encoding] [error_mode]",
     );
     console.error("  default_encoding: e.g., cp1252 (default)");
     console.error("  error_mode: strict or ignore (default)");
-    Deno.exit(1);
+    process.exit(1);
   }
-  const file = Deno.args[0];
-  const defaultEnc = Deno.args[1] || "cp1252";
-  const errorMode = (Deno.args[2] || "ignore") as "strict" | "ignore";
+
+  const file = args[0];
+  const defaultEnc = args[1] || "cp1252";
+  const errorMode = (args[2] || "ignore") as "strict" | "ignore";
 
   if (errorMode !== "strict" && errorMode !== "ignore") {
     console.error("Invalid error_mode. Use 'strict' or 'ignore'.");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   try {
-    const contentBytes = await Deno.readFile(file);
-    // Use latin1 (iso-8859-1) to read bytes without modification, as RTF specifies its own encoding.
-    const content = new TextDecoder("latin1").decode(contentBytes);
-    const result = rtfToText(content, defaultEnc, errorMode);
-    console.log("--- FINAL OUTPUT ---");
+    const content = fs.readFileSync(file, "latin1");
+    const result = stripRtf(
+      content,
+      defaultEnc,
+      errorMode,
+    );
     console.log(result);
-    console.log("--- END FINAL OUTPUT ---");
   } catch (err) {
     console.error(`Error processing file '${file}':`, err);
-    Deno.exit(1);
+    process.exit(1);
   }
 }

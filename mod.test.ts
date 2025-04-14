@@ -1,5 +1,5 @@
-import { assertEquals } from "jsr:@std/assert/equals";
-import { rtfToText } from "./mod.ts";
+import { assertEquals } from "jsr:@std/assert@^1.0.12/equals";
+import stripRtf from "./mod.ts";
 
 Deno.test("intergation test", () => {
   const stats = { failed: 0, passed: 0 };
@@ -12,7 +12,7 @@ Deno.test("intergation test", () => {
     const rtfPath = `striprtf/tests/rtf/${rtfFile.name}`;
     const rtfContentBytes = Deno.readFileSync(rtfPath);
     const rtfContent = new TextDecoder("latin1").decode(rtfContentBytes);
-    const strippedContent = rtfToText(rtfContent);
+    const strippedContent = stripRtf(rtfContent);
     let expectedContent;
     try {
       expectedContent = Deno.readTextFileSync(
