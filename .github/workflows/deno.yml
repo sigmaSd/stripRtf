@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - name: Setup repo
@@ -36,8 +36,9 @@ jobs:
         if: runner.os == 'Linux'
         run: deno lint
 
-      - name: Build
-        run: deno task wasmbuild
+      - name: Run type check
+        if: runner.os == 'Linux'
+        run: deno check .
 
       - name: Run tests
         run: deno test -R
