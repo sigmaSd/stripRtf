@@ -508,6 +508,18 @@ function removePictGroups(rtfText: string): string {
 }
 
 // --- Main Conversion Function ---
+/**
+ * Converts an RTF string to plain text.
+ *
+ * Handles nested groups, control words, control symbols, Unicode escapes (`\uN`),
+ * and hex escapes (`\'xx`) according to the document's declared `\ansicpg`
+ * or the active font's `\fcharset`. Defaults to `cp1252` if no encoding is found.
+ *
+ * @param rtfText The RTF string to convert.
+ * @param defaultEncoding The default encoding to use if `\ansicpg` is missing or invalid. Defaults to "cp1252".
+ * @param errors How to handle decoding errors for `\'xx` hex escapes: "strict" (throw error) or "ignore" (warn and skip). Defaults to "ignore".
+ * @returns The extracted plain text.
+ */
 export function stripRtf(
   rtfText: string,
   defaultEncoding: string = "cp1252",
@@ -551,13 +563,12 @@ export function stripRtf(
     if (iconv.encodingExists(detectedEncoding)) {
       documentEncoding = detectedEncoding;
     } else {
-      console.warn(
-        `Warning: Document specified \\ansicpg${codepage}, mapped to unsupported encoding '${detectedEncoding}'. Using default '${defaultEncoding}'.`,
-      );
+      // console.warn(
+      //   `Warning: Document specified \\ansicpg${codepage}, mapped to unsupported encoding '${detectedEncoding}'. Using default '${defaultEncoding}'.`,
+      // );
       // Keep defaultEncoding
     }
   }
-  // console.log(`[DEBUG] Using document encoding: ${documentEncoding}`);
 
   // Parse the font table using the Python-equivalent regex
   // This regex *only* matches fonts that explicitly have \fcharset
@@ -567,8 +578,6 @@ export function stripRtf(
     const actualCharset = fcharset;
     const actualName = fontName.trim().replace(/['"]$/, "");
 
-    // console.log(`[DEBUG] FONTTABLE Match: ID=${fontId}, Charset=${actualCharset}, Name=${actualName}`);
-
     let encoding = documentEncoding; // Start with document encoding as fallback
     const charsetNum = parseInt(actualCharset, 10);
     const mappedEncoding = charsetMap[charsetNum];
@@ -577,15 +586,15 @@ export function stripRtf(
       encoding = mappedEncoding; // Use the mapped and supported encoding
     } else if (mappedEncoding) {
       // Mapped but not supported by iconv-lite
-      console.warn(
-        `Warning: Font ${fontId} specified charset ${actualCharset}, mapped to unsupported encoding '${mappedEncoding}'. Falling back to document encoding '${documentEncoding}'.`,
-      );
+      // console.warn(
+      //   `Warning: Font ${fontId} specified charset ${actualCharset}, mapped to unsupported encoding '${mappedEncoding}'. Falling back to document encoding '${documentEncoding}'.`,
+      // );
       // encoding remains documentEncoding
     } else {
       // Not found in charsetMap
-      console.warn(
-        `Warning: Font ${fontId} specified charset ${actualCharset}, but no mapping found in charsetMap. Falling back to document encoding '${documentEncoding}'.`,
-      );
+      // console.warn(
+      //   `Warning: Font ${fontId} specified charset ${actualCharset}, but no mapping found in charsetMap. Falling back to document encoding '${documentEncoding}'.`,
+      // );
       // encoding remains documentEncoding
     }
 
@@ -594,10 +603,8 @@ export function stripRtf(
       charset: actualCharset,
       encoding: encoding,
     };
-    // console.log(`[DEBUG] Adding to fonttbl[${fontId}]:`, JSON.stringify(fonttbl[fontId]));
     return ""; // Required by replace
   });
-  // console.log("[DEBUG] Final Parsed font table:", JSON.stringify(fonttbl, null, 2));
 
   // --- Step 2: Helper function to decode hex bytes ---
   const decodeHexBytes = () => {
@@ -607,17 +614,12 @@ export function stripRtf(
     let usedFontEncoding = false;
     const fontEntry = currentFontId ? fonttbl[currentFontId] : undefined;
 
-    // console.log(`[DEBUG] decodeHexBytes: Current fontId = ${currentFontId}`);
-
     // Use font-specific encoding ONLY if the font was successfully parsed by FONTTABLE regex
     // and has a valid encoding stored.
     if (fontEntry?.encoding) {
-      // console.log(`[DEBUG] decodeHexBytes: Found font entry for font ${currentFontId}:`, JSON.stringify(fontEntry));
       encodingToUse = fontEntry.encoding;
       usedFontEncoding = encodingToUse !== documentEncoding;
-      // console.log(`[DEBUG] decodeHexBytes: Using font encoding: ${encodingToUse}`);
     } else {
-      // console.log(`[DEBUG] decodeHexBytes: No valid font entry for font ${currentFontId}. Using document encoding: ${documentEncoding}`);
       // If the font wasn't parsed (e.g., lacked \fcharset needed by the regex),
       // we correctly fall back to documentEncoding here, matching Python's implicit behavior.
     }
@@ -629,7 +631,6 @@ export function stripRtf(
         const decodedString = iconv.decode(buffer, encodingToUse, {
           stripBOM: true,
         });
-        // console.log(`[DEBUG] decodeHexBytes: Decoded "${decodedString}" using ${encodingToUse}`);
         if (!suppressOutput && !ignorable) {
           output += decodedString;
         }
@@ -639,7 +640,7 @@ export function stripRtf(
         const errorMessage =
           `Unsupported encoding '${encodingToUse}' by iconv-lite for hex sequence: ${hexString}.`;
         if (errors === "strict") throw new Error(errorMessage);
-        else console.warn(`${errorMessage} Skipping sequence.`);
+        // else console.warn(`${errorMessage} Skipping sequence.`);
       }
     } catch (decodeError) {
       const hexString = hexBytes.map((b) => b.toString(16).padStart(2, "0"))
@@ -650,7 +651,7 @@ export function stripRtf(
         `: ${decodeError}`;
       if (errors === "strict") {
         throw new Error(errorMessage, { cause: decodeError });
-      } else console.warn(`${errorMessage} Skipping sequence.`);
+      } // else console.warn(`${errorMessage} Skipping sequence.`);
     } finally {
       hexBytes = [];
     }
@@ -664,7 +665,6 @@ export function stripRtf(
 
     // Decode pending hex bytes BEFORE processing the current token
     if (hexBytes.length > 0 && !hex) {
-      // console.log(`[DEBUG] Parser loop: Triggering decodeHexBytes before processing token: ${_fullMatch}`);
       decodeHexBytes();
     }
 
@@ -677,7 +677,7 @@ export function stripRtf(
         if (stack.length > 0) {
           [ucskip, ignorable, suppressOutput] = stack.pop()!;
         } else {
-          console.warn("Warning: Encountered unmatched '}' in RTF.");
+          // console.warn("Warning: Encountered unmatched '}' in RTF.");
           ucskip = 1;
           ignorable = false;
           suppressOutput = false;
@@ -714,19 +714,17 @@ export function stripRtf(
             const codeHex = c.toString(16).toUpperCase();
             const message =
               `Invalid Unicode code point U+${codeHex} from \\u${arg}`;
-            console.warn(message);
+            // console.warn(message);
             if (errors === "strict") throw new Error(message, { cause: e });
           }
         }
         curskip = ucskip; // Skip specified number of bytes after \u
       } else if (word === "f" && arg) {
         // Update current font ID
-        // console.log(`[DEBUG] Parser loop: Setting currentFontId = '${arg}' (was '${currentFontId}')`);
         currentFontId = arg;
       } else if (word === "deff" && arg) {
         // Set default font ID if none set yet (less critical now)
         if (currentFontId === null) {
-          // console.log(`[DEBUG] Parser loop: Setting initial currentFontId = '${arg}' from \\deff`);
           currentFontId = arg;
         }
       }
@@ -737,10 +735,9 @@ export function stripRtf(
       } else if (!ignorable && !suppressOutput) {
         // Accumulate hex byte if not skipping/ignorable/suppressed
         try {
-          // console.log(`[DEBUG] Parser loop: Accumulating hex byte '${hex}'`);
           hexBytes.push(parseInt(hex, 16));
         } catch (e) {
-          console.warn(`Invalid hex byte value: \\'${hex}`);
+          // console.warn(`Invalid hex byte value: \\'${hex}`);
           if (errors === "strict") throw e;
         }
       }
@@ -756,7 +753,6 @@ export function stripRtf(
 
   // Final decode check for any remaining hex bytes
   if (hexBytes.length > 0) {
-    // console.log(`[DEBUG] Final Check: Triggering decodeHexBytes for remaining bytes.`);
     decodeHexBytes();
   }
 
@@ -764,11 +760,20 @@ export function stripRtf(
 }
 
 // keep the python original name
+/**
+ * Alias for `stripRtf`. Converts an RTF string to plain text.
+ * Maintained for potential compatibility or alternative naming preference.
+ *
+ * @function
+ * @param rtfText The RTF string to convert.
+ * @param defaultEncoding The default encoding to use if `\ansicpg` is missing or invalid. Defaults to "cp1252".
+ * @param errors How to handle decoding errors for `\'xx` hex escapes: "strict" (throw error) or "ignore" (warn and skip). Defaults to "ignore".
+ * @returns The extracted plain text.
+ */
 export const rtfToText = stripRtf;
 
 export default stripRtf;
 
-// --- Deno Execution Block ---
 if (import.meta.main) {
   const process = await import("node:process");
   const fs = await import("node:fs");
